@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weather Dashboard</title>
+  <script src="https://openweathermap.org/api"></script>
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      background-color: #f2f2f2;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    #weather-info {
+      text-align: center;
+      font-size: 24px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease-in-out;
+    }
+
+    #weather-info:hover {
+      box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .weather-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 10px;
+    }
+
+    .weather-text {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .weather-forecast {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    .weather-forecast-item {
+      text-align: center;
+    }
+
+    .weather-forecast-date {
+      font-size: 14px;
+      color: #333;
+    }
+
+    .weather-forecast-icon {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 5px;
+    }
+
+    .weather-forecast-text {
+      font-size: 12px;
+      color: #333;
+	} 
+	  
+    #forecast-info {
+      text-align: center;
+      font-size: 24px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      transition: box-shadow 0.3s ease-in-out;
+    }
+
+    #forecast-info:hover {
+      box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Weather Dashboard</h1>
+  <div id="weather-info">
+    <!-- Current weather data and icon will be displayed here -->
+  </div>
+  <div id="forecast-info">
+    <!-- Tomorrow's weather data and icon will be displayed here -->
+  </div>
+
+  <script>
+    var API_KEY = "0eda4e3f477e92d92ca67ea30187ab42";
+    var CITY_ID = "2656173";
+
+    var weatherData = fetch("https://api.openweathermap.org/data/2.5/weather?id=" + CITY_ID + "&units=metric&appid=" + API_KEY);
+    var forecastData = fetch("https://api.openweathermap.org/data/2.5/forecast?id=" + CITY_ID + "&units=metric&appid=" + API_KEY);
+
+    weatherData.then(function(response) {
+      return response.json();
+    }).then(function(data) {
+      var date = new Date();
+      var hour = date.getHours();
+      if (hour >= 6 && hour < 12) {
+        document.body.style.backgroundColor = "#f9e79f";
+      } else if (hour >= 12 && hour < 18) {
+        document.body.style.backgroundColor = "#f7dc6f";
+      } else if (hour >= 18 && hour < 21) {
+        document.body.style.backgroundColor = "#d6bcfa";
+      } else {
+        document.body.style.backgroundColor = "#2c3e50";
+      }
+
+      var weather = data.weather[0].id;
+      if (weather >= 200 && weather <= 232) {
+        // Thunderstorm
+        document.body.style.backgroundColor = "#333";
+        var icon = "https://openweathermap.org/img/wn/11d.png";
+      } else if (weather >= 300 && weather <= 321) {
+        // Drizzle
+        document.body.style.backgroundColor = "#939393";
+        var icon = "https://openweathermap.org/img/wn/09d.png";
+      } else if (weather >= 500 && weather <= 531) {
+        // Rain
+        document.body.style.backgroundColor = "#333";
+        var icon = "https://openweathermap.org/img/wn/10d.png";
+      } else if (weather >= 600 && weather <= 622) {
+        // Snow
+        document.body.style.backgroundColor = "#ccc";
+        var icon = "https://openweathermap.org/img/wn/13d.png";
+      } else if (weather >= 700 && weather <= 781) {
+        // Atmosphere (e.g. fog, mist)
+        document.body.style.backgroundColor = "#ccc";
+        var icon = "https://openweathermap.org/img/wn/50d.png";
+      } else if (weather == 800) {
+        // Clear sky
+        document.body.style.backgroundColor = "#f2f2f2";
+        var icon = "https://openweathermap.org/img/wn/01d.png";
+      } else if (weather >= 801 && weather <= 804) {
+        // Clouds
+        document.body.style.backgroundColor = "#ccc";
+        var icon = "https://openweathermap.org/img/wn/03d.png";
+      }
+
+      var weatherInfo = document.getElementById("weather-info");
+      weatherInfo.innerHTML = "";
+      var weatherIcon = document.createElement("img");
+      weatherIcon.setAttribute("src", icon);
+      weatherIcon.setAttribute("class", "weather-icon");
+      weatherInfo.appendChild(weatherIcon);
+      var weatherText = document.createElement("div");
+      weatherText.setAttribute("class", "weather-text");
+      weatherText.innerHTML = "The current weather in " + data.name + " is " + data.weather[0].description + " with a temperature of " + data.main.temp + "°C";
+      weatherInfo.appendChild(weatherText);
+
+      forecastData.then(function(response) {
+        return response.json();
+      }).then(function(data) {
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        var tomorrowString = tomorrow.toISOString().split("T")[0];
+
+        var tomorrowWeather = null;
+        for (var i = 0; i < data.list.length; i++) {
+          if (data.list[i].dt_txt.includes(tomorrowString)) {
+            tomorrowWeather = data.list[i];
+            break;
+          }
+        }
+
+        if (tomorrowWeather == null) {
+          // No forecast data available for tomorrow
+          return;
+        }
+
+        var tomorrowIcon = null;
+        var tomorrowTempMin = Number.MAX_VALUE;
+        var tomorrowTempMax = Number.MIN_VALUE;
+          var weather = tomorrowWeather.weather[i].id;
+          if (weather >= 200 && weather <= 232) {
+            // Thunderstorm
+            tomorrowIcon = "https://openweathermap.org/img/wn/11d.png";
+          } else if (weather >= 300 && weather <= 321) {
+            // Drizzle
+            tomorrowIcon = "https://openweathermap.org/img/wn/09d.png";
+          } else if (weather >= 500 && weather <= 531) {
+            // Rain
+            tomorrowIcon = "https://openweathermap.org/img/wn/10d.png";
+          } else if (weather >= 600 && weather <= 622) {
+            // Snow
+            tomorrowIcon = "https://openweathermap.org/img/wn/13d.png";
+          } else if (weather >= 700 && weather <= 781) {
+            // Atmosphere (e.g. fog, mist)
+            tomorrowIcon = "https://openweathermap.org/img/wn/50d.png";
+          } else if (weather == 800) {
+            // Clear sky
+            tomorrowIcon = "https://openweathermap.org/img/wn/01d.png";
+          } else if (weather >= 801 && weather <= 804) {
+            // Clouds
+            tomorrowIcon = "https://openweathermap.org/img/wn/03d.png";
+          }
+
+          tomorrowTempMin = Math.min(tomorrowTempMin, tomorrowWeather.main.temp_min);
+          tomorrowTempMax = Math.max(tomorrowTempMax, tomorrowWeather.main.temp_max);
+        
+
+        if (tomorrowIcon == null) {
+          // No forecast data available for tomorrow
+          return;
+        }
+
+        var forecastInfo = document.getElementById("forecast-info");
+        forecastInfo.innerHTML = "";
+        var forecastIcon = document.createElement("img");
+        forecastIcon.setAttribute("src", tomorrowIcon);
+        forecastIcon.setAttribute("class", "weather-icon");
+        forecastInfo.appendChild(forecastIcon);
+        var forecastText = document.createElement("div");
+        forecastText.setAttribute("class", "weather-text");
+        forecastText.innerHTML = "Tomorrow's weather in " + data.city.name + " is expected to be " + tomorrowWeather.weather[0].description + " with a high of " + tomorrowTempMax + "°C and a low of " + tomorrowTempMin + "°C";
+        forecastInfo.appendChild(forecastText);
+      });
+    });
+  </script>
+</body>
+</html>
